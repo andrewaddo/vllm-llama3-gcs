@@ -295,3 +295,9 @@ curl http://localhost:8080/v1/completions -H "Content-Type: application/json" -d
     "temperature": 0
 }'
 ```
+## Clean up
+```
+kubectl delete deployment vllm-gcs
+kubectl delete service llm-service
+gcloud container clusters delete $CLUSTER_NAME --region=$REGION
+```
