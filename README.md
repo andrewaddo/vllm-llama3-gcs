@@ -14,7 +14,7 @@ DISK_IMAGE_NAME=ducdo-vllm
 ### Prepare the secondary boot disk image
 Create a Cloud Storage bucket to store the execution logs
 ```
-gsutil mb -l $REGION gs://$LOG_BUCKET_NAME --uniform-bucket-level-access
+gsutil mb -l $REGION gs://$LOG_BUCKET_NAME
 ```
 Build the **gke-disk-image-builder** tool
 ```
