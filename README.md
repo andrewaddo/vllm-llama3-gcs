@@ -1,5 +1,6 @@
 # vllm-llama3-gcs
 Deploy a Llama3.3 70B model on GKE using vllm and Llama 3.3 70B model. In this lab, we will use secondary boot disk for caching the vllm image and GCSFuse for caching the Llama 3.3 model. These techniques help improving faster loading and avoid downloading model directly from the internet.
+
 Notes: for even faster model loading time, consider using Hyperdisk ML option.
 
 ## Set up 
@@ -8,12 +9,12 @@ Notes: for even faster model loading time, consider using Hyperdisk ML option.
 CLUSTER_NAME=ducdo-llama3-gcs
 PROJECT_ID=gpu-launchpad-playground
 REGION=us-central1
-LOCATION=us-central1-c
-LOG_BUCKET_NAME=ducdo-vllm
-DISK_IMAGE_NAME=ducdo-vllm
 ```
 ### Prepare the secondary boot disk image
 Create a Cloud Storage bucket to store the execution logs
+```
+LOG_BUCKET_NAME=ducdo-vllm
+```
 ```
 gsutil mb -l $REGION gs://$LOG_BUCKET_NAME
 ```
@@ -24,12 +25,17 @@ cd ai-on-gke/tools/gke-disk-image-builder
 go build -o cli ./cli
 ```
 Prepare the secondary boot disk image
+
 Notes: feel free to change to vllm-openai to the later version (e.g. 0.8.3)
+```
+DISK_IMAGE_NAME=ducdo-vllm
+ZONE=us-central1-c
+```
 ```
 go run ./cli \
     --project-name=$PROJECT_ID \
     --image-name=$DISK_IMAGE_NAME \
-    --zone=$LOCATION \
+    --zone=$ZONE \
     --gcs-path=gs://$LOG_BUCKET_NAME \
     --disk-size-gb=100 \
     --container-image=docker.io/vllm/vllm-openai:v0.7.3
@@ -37,9 +43,12 @@ go run ./cli \
 ### Download the LLM model to a GCS bucket
 Create the bucket
 ```
+MODEL_BUCKET=ducdo-llm-models
+```
+```
 gsutil mb -l $REGION gs://$MODEL_BUCKET
 ```
-### Set up a Kubernetes ServiceAccount to access the bucket that has the downloaded model
+### Set up a Kubernetes ServiceAccount to access the bucket that will has/has the downloaded model
 Create the Kubernetes ServiceAccount
 ```
 KSA_NAME=ksa-ducdo
@@ -50,7 +59,6 @@ kubectl create serviceaccount $KSA_NAME --namespace $NAMESPACE
 ```
 Grant read-write access to the Kubernetes ServiceAccount in order to access the Cloud Storage bucket
 ```
-MODEL_BUCKET=ducdo-llm-models
 PROJECT_NUMBER=604327164091
 ```
 ```
@@ -73,7 +81,6 @@ gcloud container node-pools create $CPU_NODE_POOL_NAME \
     --machine-type=c4-standard-48 \
     --cluster=$CLUSTER_NAME \
     --image-type="COS_CONTAINERD" \
-    --enable-image-streaming \
     --location=$REGION
 ```
 Create a GKE job to download the LLM model
