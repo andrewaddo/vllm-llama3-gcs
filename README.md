@@ -49,6 +49,24 @@ MODEL_BUCKET=ducdo-llm-models
 gsutil mb -l $REGION gs://$MODEL_BUCKET
 ```
 ### Set up a Kubernetes ServiceAccount to access the bucket that will has/has the downloaded model
+## Create the cluster
+```
+gcloud container clusters create $CLUSTER_NAME \
+    --project=$PROJECT_ID \
+    --region=$REGION \
+    --workload-pool=$PROJECT_ID.svc.id.goog \
+    --release-channel=rapid \
+    --num-nodes=1 \
+    --image-type="COS_CONTAINERD" \
+    --addons=GcsFuseCsiDriver \
+    --enable-image-streaming
+```
+Or edit an existing cluster to enable the GCS Fuse support
+```
+gcloud container clusters update $CLUSTER_NAME \
+    --region=$REGION \
+    --update-addons=GcsFuseCsiDriver=ENABLED
+```
 Create the Kubernetes ServiceAccount
 ```
 KSA_NAME=ksa-ducdo
@@ -156,23 +174,6 @@ spec:
 kubectl apply -f producer-job.yaml
 ```
 ## Create the cluster
-```
-gcloud container clusters create $CLUSTER_NAME \
-    --project=$PROJECT_ID \
-    --region=$REGION \
-    --workload-pool=$PROJECT_ID.svc.id.goog \
-    --release-channel=rapid \
-    --num-nodes=1 \
-    --image-type="COS_CONTAINERD" \
-    --addons=GcsFuseCsiDriver \
-    --enable-image-streaming
-```
-Or edit an existing cluster to enable the GCS Fuse support
-```
-gcloud container clusters update $CLUSTER_NAME \
-    --region=$REGION \
-    --update-addons=GcsFuseCsiDriver=ENABLED
-```
 ### Create the node pool
 Set the needed environment variables
 ```
